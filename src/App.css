@@ -1,38 +1,80 @@
-.App {
+:root {
+  --white: #eeeeee;
+  --background: #867254;
+  --font-family: et-book, Palatino, "Palatino Linotype", "Palatino LT STD", "Book Antiqua", Georgia, serif;
+}
+
+html {
+  color: var(--white);
+  background-color: var(--background);
+  font-family: var(--font-family);
+}
+
+button {
+  font-family: var(--font-family);
+  padding: 12px 24px;
+  font-size: 1.2rem;
+}
+
+.button-container {
+  width: 100%;
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+
+.App {
+  width: 600px;
+  margin: 80px auto;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+header {
+  margin-bottom: 80px;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+h1 {
+  font-weight: 400;
+  font-size: 3.2rem;
+}
+
+h2 {
+  font-weight: 400;
+  font-size: 1.4rem;
+}
+
+.input-wrapper {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  justify-content: space-between;
+  margin-top: 8px;
+  margin-bottom: 16px;
 }
 
-.App-link {
-  color: #61dafb;
+.input-wrapper .quantity-input {
+  margin-top: 0;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.input-radio-wrapper {
+  margin-top: 8px;
+}
+
+.input-radio-wrapper-item {
+  display: flex;
+
+}
+
+form {
+  margin-bottom: 80px;
+}
+
+input[type="text"] {
+  width: 100%;
+  margin-top: 0;
+}
+
+a {
+  color: var(--white);
+}
+
+main p {
+  margin-top: 4px;
+  margin-bottom: 6px;
 }
