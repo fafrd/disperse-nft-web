@@ -10,15 +10,8 @@ html {
   font-family: var(--font-family);
 }
 
-button {
-  font-family: var(--font-family);
-  padding: 12px 24px;
-  font-size: 1.2rem;
-}
-
-.button-container {
-  width: 100%;
-  text-align: center;
+.hidden {
+  display: none;
 }
 
 
@@ -39,6 +32,11 @@ h1 {
 h2 {
   font-weight: 400;
   font-size: 1.4rem;
+}
+
+h3 {
+  font-weight: 400;
+  font-size: 1.2rem;
 }
 
 .input-wrapper {
@@ -77,4 +75,22 @@ a {
 main p {
   margin-top: 4px;
   margin-bottom: 6px;
+}
+
+button#connect {
+  font-family: var(--font-family);
+  padding: 6px 24px;
+  font-size: 1.2rem;
+  margin-left: 12px;
+}
+
+button#disperse {
+  font-family: var(--font-family);
+  padding: 12px 24px;
+  font-size: 1.2rem;
+}
+
+.button-container {
+  width: 100%;
+  text-align: center;
 }

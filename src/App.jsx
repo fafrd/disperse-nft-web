@@ -1,14 +1,22 @@
 import React from 'react';
+import { ethers } from "ethers";
 
 import './App.css';
 import Validation from './Validation.jsx';
-// DisperseNft.abi.json
+import abi from './DisperseNft.abi.json';
+
+const DISPERSE_CONTRACT_ADDR = "0xCD8a1C3ba11CF5ECfa6267617243239504a98d90";
+const EXPECTED_CHAINID = 1337;
 
 class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      network: 'Ethereum Mainnet',
+      ethereum: null,
+      provider: null,
+      signer: null,
+      walletStatus: 'no-wallet-detected',
+      chainId: '',
       contract: '',
       recipients: '',
       parsedRecipients: [],
@@ -21,11 +29,73 @@ class App extends React.Component {
       recipientsError: 'empty',
       idsError: 'empty',
       quantitiesError: 'empty',
-
+      txnHash: '',
+      failureReason: '',
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.connectWallet = this.connectWallet.bind(this);
+    this.switchNetwork = this.switchNetwork.bind(this);
+  }
+
+  async componentDidMount() {
+    await this.setWalletState();
+  }
+
+  async setWalletState() {
+    console.log("setWalletState");
+
+    const { ethereum } = window;
+    let provider = null, signer = null, walletStatus = "wallet-not-connected";
+    if (ethereum) {
+      provider = new ethers.providers.Web3Provider(ethereum);
+      signer = provider.getSigner();
+      const network = await provider.getNetwork();
+
+      const connectedAccounts = await provider.listAccounts();
+      console.log("connected accounts: " + JSON.stringify(connectedAccounts));
+
+      if (connectedAccounts.length == 0) {
+        console.debug("Setting wallet state: wallet-not-connected");
+        walletStatus = "wallet-not-connected";
+      } else if (network.chainId !== EXPECTED_CHAINID) {
+        console.debug("Setting wallet state: wrong-network");
+        walletStatus = "wrong-network";
+      } else {
+        console.debug("Setting wallet state: empty (everything good)");
+        walletStatus = "";
+      }
+
+      this.setState({
+        ethereum: ethereum,
+        provider: provider,
+        signer: signer,
+        chainId: network.chainId,
+        walletStatus: walletStatus
+      });
+    }
+  }
+
+  async connectWallet() {
+    await this.state.ethereum.request({
+      method: 'eth_requestAccounts'
+    });
+    const accts = await this.state.provider.listAccounts();
+    if (accts.length > 0) {
+      await this.setWalletState();
+    } else {
+      throw Error("Connected to ethereum but provider.listAccounts() returned empty!");
+    }
+  }
+
+  async switchNetwork() {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: "0x" + EXPECTED_CHAINID.toString(16) }],
+    });
+
+    this.setWalletState();
   }
 
   calcQtyFromIds(parsedIds) {
@@ -147,8 +217,57 @@ class App extends React.Component {
     }
   }
 
-  handleSubmit(event) {
-    console.log("handling submit...");
+  async handleSubmit(event) {
+    console.log("Dispersing tokens");
+
+    console.log("abi: ");
+    console.log(abi);
+
+    const contract = await new ethers.Contract(DISPERSE_CONTRACT_ADDR, abi, this.state.signer);
+    console.log(contract);
+
+    // temp setstate for testing
+    this.setState({
+      contract: "0x73DA73EF3a6982109c4d5BDb0dB9dd3E3783f313",
+      recipients: ["0x70997970C51812dc3A010C7d01b50e0d17dc79C8"],
+      ids: ["1"],
+      quantities: ["1"],
+    });
+
+    console.log(`Ready to commit transaction. Parameters:
+  contract: \t${JSON.stringify(this.state.contract)},
+  recipients: \t${JSON.stringify(this.state.recipients)},
+  token ids: \t${JSON.stringify(this.state.ids)},
+  quantities: \t${JSON.stringify(this.state.quantities)},
+  binary data: \t"0x"
+    `);
+
+    try {
+      const tx = await contract.disperse(
+        this.state.contract,
+        this.state.recipients,
+        this.state.ids,
+        this.state.quantities,
+        "0x"
+      );
+      this.setState({
+        txnHash: tx.hash,
+        walletStatus: "transaction-in-progress"
+      });
+
+      const receipt = await tx.wait();
+      console.log("Transaction success. receipt: ");
+      console.log(receipt);
+      this.setState({walletStatus: "transaction-success"});
+
+    } catch (err) {
+      console.error(err);
+      this.setState({
+        failureReason: err.toString(),
+        walletStatus: "transaction-fail"
+      });
+    }
+
   }
 
   render() {
@@ -212,52 +331,77 @@ class App extends React.Component {
       <header className="App-header">
         <h1>Disperse NFT</h1>
         <h2>Batch-send your ERC1155 tokens to one or more recipients.</h2>
+        <h3>provider: {JSON.stringify(!!this.state.provider)}. network: {JSON.stringify(this.state.chainId)} </h3>
       </header>
 
-      <form autoComplete="off">
-        <label htmlFor="contract">NFT contract <i>(address)</i></label>
-        <div className="input-wrapper">
-          <input type="text" name="contract" value={this.state.contract} autoComplete="off" onChange={this.handleChange} maxLength="42" placeholder="i.e. 0x73DA73EF3a6982109c4d5BDb0dB9dd3E3783f313" />
-        </div>
+      <main className={this.state.walletStatus === "no-wallet-detected" ? "" : "hidden"}>
+        <h3>No wallet detected. Install metamask: <a href="https://metamask.io/">metamask.io</a></h3>
+      </main>
 
-        <label htmlFor="recipients">Recipients <i>(array of addresses, as strings)</i></label>
-        <div className="input-wrapper">
-          <input type="text" name="recipients" value={this.state.recipients} autoComplete="off" onChange={this.handleChange} placeholder='i.e. ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", ...]' />
-        </div>
+      <main className={this.state.walletStatus === "wallet-not-connected" ? "" : "hidden"}>
+        <h3>Connect your wallet to continue: <button id="connect" type="button" onClick={this.connectWallet}>Connect Wallet</button></h3>
+      </main>
 
-        <label htmlFor="ids">IDs <i>(array of NFT IDs, sorted, as strings)</i></label>
-        <div className="input-wrapper">
-          <input type="text" name="ids" value={this.state.ids} autoComplete="off" onChange={this.handleChange} placeholder='i.e. ["21", "22", "23"]' />
-        </div>
+      <main className={this.state.walletStatus === "wrong-network" ? "" : "hidden"}>
+        <h3>Switch to Ethereum network to continue: <button id="connect" type="button" onClick={this.switchNetwork}>Switch Network</button></h3>
+      </main>
 
-        <label htmlFor="quantities">Quantities <i>(array of quantities, order corresponding to IDs, as strings)</i></label>
+      <main className={this.state.walletStatus === "transaction-in-progress" ? "" : "hidden"}>
+        <h3>Transaction in progress: {this.state.txnHash}</h3>
+      </main>
 
-        <div className="input-radio-wrapper">
-          <div className="input-radio-wrapper-item">
-            <input type="radio" id="quantityToggleManual" name="quantityToggle" value="quantityToggleManual" onChange={this.handleChange} checked={this.state.quantityToggle === "quantityToggleManual"} />
-            <label htmlFor="quantityToggleManual">Manual selection</label>
+      <main className={this.state.walletStatus === "transaction-success" ? "" : "hidden"}>
+        <h3>NFT dispersal complete! {this.state.txnHash}</h3>
+      </main>
+
+      <main className={this.state.walletStatus === "transaction-fail" ? "" : "hidden"}>
+        <h3>NFT dispersal failed! {this.state.txnHash}</h3>
+        <p><code>{this.state.failureReason}</code></p>
+      </main>
+
+      <main className={this.state.walletStatus === "" ? "" : "hidden"}>
+        <form autoComplete="off">
+          <label htmlFor="contract">NFT contract <i>(address)</i></label>
+          <div className="input-wrapper">
+            <input type="text" name="contract" value={this.state.contract} autoComplete="off" onChange={this.handleChange} maxLength="42" placeholder="i.e. 0x73DA73EF3a6982109c4d5BDb0dB9dd3E3783f313" />
           </div>
-          <div className="input-radio-wrapper-item">
-            <input type="radio" id="quantityToggleAuto" name="quantityToggle" value="quantityToggleAuto" onChange={this.handleChange} checked={this.state.quantityToggle === "quantityToggleAuto"} />
-            <label htmlFor="quantityToggleAuto">Automatic selection (1 of each ID, for each recipient)</label>
+
+          <label htmlFor="recipients">Recipients <i>(array of addresses, as strings)</i></label>
+          <div className="input-wrapper">
+            <input type="text" name="recipients" value={this.state.recipients} autoComplete="off" onChange={this.handleChange} placeholder='i.e. ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", ...]' />
           </div>
-        </div>
 
-        <div className="input-wrapper quantity-input">
-          <input type="text" name="quantities" value={quantityValue} disabled={quantityDisabled} autoComplete="off" onChange={this.handleChange} placeholder="i.e. [1, 2, 1]" />
-        </div>
+          <label htmlFor="ids">IDs <i>(array of NFT IDs, sorted, as strings)</i></label>
+          <div className="input-wrapper">
+            <input type="text" name="ids" value={this.state.ids} autoComplete="off" onChange={this.handleChange} placeholder='i.e. ["21", "22", "23"]' />
+          </div>
 
-      </form>
+          <label htmlFor="quantities">Quantities <i>(array of quantities, order corresponding to IDs, as strings)</i></label>
 
-      <main>
-        <p>Network: {this.state.network}</p>
+          <div className="input-radio-wrapper">
+            <div className="input-radio-wrapper-item">
+              <input type="radio" id="quantityToggleManual" name="quantityToggle" value="quantityToggleManual" onChange={this.handleChange} checked={this.state.quantityToggle === "quantityToggleManual"} />
+              <label htmlFor="quantityToggleManual">Manual selection</label>
+            </div>
+            <div className="input-radio-wrapper-item">
+              <input type="radio" id="quantityToggleAuto" name="quantityToggle" value="quantityToggleAuto" onChange={this.handleChange} checked={this.state.quantityToggle === "quantityToggleAuto"} />
+              <label htmlFor="quantityToggleAuto">Automatic selection (1 of each ID, for each recipient)</label>
+            </div>
+          </div>
+
+          <div className="input-wrapper quantity-input">
+            <input type="text" name="quantities" value={quantityValue} disabled={quantityDisabled} autoComplete="off" onChange={this.handleChange} placeholder="i.e. [1, 2, 1]" />
+          </div>
+
+        </form>
+
         <p>Contract: {contractPreview} <Validation valid={!this.state.contractError} /></p>
         <p>Recipients: {recipientsPreview} <Validation valid={!this.state.recipientsError} /></p>
         <p>NFT IDs: {idsPreview} <Validation valid={!this.state.idsError} /></p>
         <p>Quantities: {quantitiesPreview} <Validation valid={this.state.quantityToggle === "quantityToggleAuto" || !this.state.quantitiesError} /></p>
 
         <div className="button-container">
-          <button type="button" disabled={buttonDisabled} onClick={this.handleSubmit}>Disperse</button>
+          <button id="disperse" type="button" onClick={this.handleSubmit}>Disperse</button>
         </div>
 
       </main>
@@ -267,3 +411,5 @@ class App extends React.Component {
 }
 
 export default App;
+
+//<button id="disperse" type="button" disabled={buttonDisabled} onClick={this.handleSubmit}>Disperse</button>
