@@ -88,10 +88,11 @@ button#connect, button.switchNetwork {
   margin-left: 12px;
 }
 
-button#disperse {
+button#disperse, button#reset {
   font-family: var(--font-family);
   padding: 12px 24px;
   font-size: 1.2rem;
+  margin-top: 12px;
 }
 
 .button-container {

@@ -3,15 +3,14 @@ import { ethers } from "ethers";
 
 import './App.css';
 import Validation from './Validation.jsx';
-import abi from './DisperseNft.abi.json';
+import DISPERSE_ABI from './DisperseNft.abi.json';
+import ERC1155_ABI from './ERC1155.abi.json';
 
-const SUPPORTED_CHAINIDS = [1, 4, 8, 1337];
-const NETWORK_NAMES = {1: "Ethereum Mainnet", 4: "Rinkeby Testnet", 8: "Ubiq Mainnet", 1337: "Hardhat Local Testnet"};
+const SUPPORTED_CHAINIDS = [1, 4];
+const NETWORK_NAMES = {1: "Ethereum Mainnet", 4: "Rinkeby Testnet"};
 const DISPERSE_CONTRACT_ADDR = {
   1: "",
   4: "0x7b194fBF78eeb62044985d37c9c4cDF6F4f0CA28",
-  8: "",
-  1337: ""
 }
 
 class App extends React.Component {
@@ -109,14 +108,8 @@ class App extends React.Component {
       case "button-ethereum":
         desiredChainId = 1;
         break;
-      case "button-ubiq":
-        desiredChainId = 8;
-        break;
       case "button-rinkeby":
         desiredChainId = 4;
-        break;
-      case "button-hardhat":
-        desiredChainId = 1337;
         break;
       default:
         throw new Error("unexpected switch fallthrough for button id " + event.target.id);
@@ -252,19 +245,9 @@ class App extends React.Component {
   async handleSubmit() {
     console.log("Dispersing tokens");
 
-    console.log(DISPERSE_CONTRACT_ADDR[this.state.chainId])
-    if (!DISPERSE_CONTRACT_ADDR[this.state.chainId]) {
-      const err = "No contract address specified for chainId " + this.state.chainId;
-      console.error(err);
-      this.setState({
-        failureReason: err,
-        walletStatus: "transaction-fail"
-      });
-      return;
-    }
-
-    const disperseContract = await new ethers.Contract(DISPERSE_CONTRACT_ADDR[this.state.chainId], abi, this.state.signer);
-    console.log(disperseContract);
+    // Step 1: Check balance
+    // Step 2: Set approval if necessary
+    // Step 3: Disperse
 
     let nftContractAddr, recipients, ids, quantities;
     try {
@@ -292,6 +275,86 @@ class App extends React.Component {
   binary data: \t"0x"
     `);
 
+    let nftContract, balances;
+    try {
+      nftContract = await new ethers.Contract(this.state.contract, ERC1155_ABI, this.state.signer);
+      const ownerAddresses = Array(ids.length).fill(this.state.connectedAccounts[0]);
+      balances = await nftContract.balanceOfBatch(ownerAddresses, ids);
+      console.log("balances: ");
+      console.log(balances)
+
+    } catch (err) {
+      console.error(err);
+      this.setState({
+        failureReason: "Unable to determine contract balance. Did you provide a valid ERC-1155 NFT contract address?",
+        walletStatus: "transaction-fail"
+      });
+      return;
+    }
+
+    for (var i = 0; i < ids.length; i++) {
+      if (quantities[i] > parseInt(balances[i], 16)) {
+        const err = `Insufficient balance for token ID ${ids[i]}. You are trying to send ${quantities[i]}, but have ${balances[i]}.`;
+        console.error(err);
+        this.setState({
+          failureReason: err,
+          walletStatus: "transaction-fail"
+        });
+        return;
+      }
+    }
+
+    const disperseContractAddr = DISPERSE_CONTRACT_ADDR[this.state.chainId];
+    if (!disperseContractAddr) {
+      const err = "No contract address specified for chainId " + this.state.chainId;
+      console.error(err);
+      this.setState({
+        failureReason: err,
+        walletStatus: "transaction-fail"
+      });
+      return;
+    }
+
+    this.setState({walletStatus: "approve-pending"});
+
+    let isApproved;
+    try {
+      isApproved = await nftContract.isApprovedForAll(this.state.connectedAccounts[0], disperseContractAddr);
+    } catch (err) {
+      console.error(err);
+      this.setState({
+        failureReason: "Unable to determine contract approval. Did you provide a valid ERC-1155 NFT contract address?",
+        walletStatus: "transaction-fail"
+      });
+      return;
+    }
+
+    console.log("existing approval status: " + isApproved);
+
+    if (!isApproved) {
+      try {
+        const tx = await nftContract.setApprovalForAll(disperseContractAddr, true);
+        this.setState({
+          txnHash: tx.hash,
+          walletStatus: "approve-in-progress"
+        });
+
+        const receipt = await tx.wait();
+        console.log("Transaction success. receipt: ");
+        console.log(receipt);
+      } catch (err) {
+        console.error(err);
+        this.setState({
+          failureReason: JSON.stringify(err, null, 2),
+          walletStatus: "transaction-fail"
+        });
+        return;
+      }
+    }
+
+    this.setState({walletStatus: "disperse-pending"});
+
+    const disperseContract = await new ethers.Contract(disperseContractAddr, DISPERSE_ABI, this.state.signer);
     try {
       const tx = await disperseContract.disperse(
         nftContractAddr,
@@ -300,20 +363,20 @@ class App extends React.Component {
         quantities,
         "0x"
       );
+
       this.setState({
         txnHash: tx.hash,
-        walletStatus: "transaction-in-progress"
+        walletStatus: "disperse-in-progress"
       });
 
       const receipt = await tx.wait();
       console.log("Transaction success. receipt: ");
       console.log(receipt);
-      this.setState({walletStatus: "transaction-success"});
-
+      this.setState({walletStatus: "disperse-success"});
     } catch (err) {
       console.error(err);
       this.setState({
-        failureReason: err,
+        failureReason: JSON.stringify(err, null, 2),
         walletStatus: "transaction-fail"
       });
     }
@@ -398,23 +461,34 @@ class App extends React.Component {
         <h3>Switch a supported network to continue: </h3>
         <ul>
           <li><h3><button className="switchNetwork" id="button-ethereum" type="button" onClick={this.switchNetwork}>Ethereum</button></h3></li>
-          <li><h3><button className="switchNetwork" id="button-ubiq" type="button" onClick={this.switchNetwork}>Ubiq</button></h3></li>
           <li><h3><button className="switchNetwork" id="button-rinkeby" type="button" onClick={this.switchNetwork}>Rinkeby testnet</button></h3></li>
-          <li><h3><button className="switchNetwork" id="button-hardhat" type="button" onClick={this.switchNetwork}>Hardhat testnet</button></h3></li>
         </ul>
       </main>
 
-      <main className={this.state.walletStatus === "transaction-in-progress" ? "" : "hidden"}>
-        <h3>Transaction in progress: {this.state.txnHash}</h3>
+      <main className={this.state.walletStatus === "approve-pending" ? "" : "hidden"}>
+        <h3>Sign transaction to approve NFT dispersal...</h3>
       </main>
 
-      <main className={this.state.walletStatus === "transaction-success" ? "" : "hidden"}>
+      <main className={this.state.walletStatus === "approve-in-progress" ? "" : "hidden"}>
+        <h3>Approval transaction in progress. Tx hash: {this.state.txnHash}</h3>
+      </main>
+
+      <main className={this.state.walletStatus === "disperse-pending" ? "" : "hidden"}>
+        <h3>Sign transaction to disperse NFT...</h3>
+      </main>
+
+      <main className={this.state.walletStatus === "disperse-in-progress" ? "" : "hidden"}>
+        <h3>Disperse tranasction in progress. Tx hash: {this.state.txnHash}</h3>
+      </main>
+
+      <main className={this.state.walletStatus === "disperse-success" ? "" : "hidden"}>
         <h3>NFT dispersal complete! {this.state.txnHash}</h3>
       </main>
 
       <main className={this.state.walletStatus === "transaction-fail" ? "" : "hidden"}>
         <h3>NFT dispersal failed!</h3>
-        <pre>{JSON.stringify(this.state.failureReason, null, 2)}</pre>
+        <p><code>{this.state.failureReason}</code></p>
+        <h3><button id="reset" type="button" onClick={() => this.setState({walletStatus: ""})}>Reset</button></h3>
       </main>
 
       <main className={this.state.walletStatus === "" ? "" : "hidden"}>
@@ -457,10 +531,9 @@ class App extends React.Component {
         <p>Recipients: {recipientsPreview} <Validation valid={!this.state.recipientsError} /></p>
         <p>NFT IDs: {idsPreview} <Validation valid={!this.state.idsError} /></p>
         <p>Quantities: {quantitiesPreview} <Validation valid={this.state.quantityToggle === "quantityToggleAuto" || !this.state.quantitiesError} /></p>
-        <p>DEBUG parsedQuantities: {JSON.stringify(this.state.parsedQuantities)}</p>
 
         <div className="button-container">
-          <button id="disperse" type="button" onClick={this.handleSubmit}>Disperse</button>
+          <button id="disperse" type="button" disabled={buttonDisabled} onClick={this.handleSubmit}>Disperse</button>
         </div>
 
       </main>
@@ -470,6 +543,3 @@ class App extends React.Component {
 }
 
 export default App;
-
-// FIXME: replace disperse button with the following:
-//<button id="disperse" type="button" disabled={buttonDisabled} onClick={this.handleSubmit}>Disperse</button>

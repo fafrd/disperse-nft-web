@@ -4,7 +4,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-code, pre {
+code {
+  white-space: pre-wrap;
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
