@@ -488,7 +488,7 @@ class App extends React.Component {
       </main>
 
       <main className={this.state.walletStatus === "disperse-success" ? "" : "hidden"}>
-        <h3>NFT dispersal complete! {this.state.txnHash}</h3>
+        <h3>NFT dispersal complete! Tx hash: {this.state.txnHash}</h3>
       </main>
 
       <main className={this.state.walletStatus === "transaction-fail" ? "" : "hidden"}>
