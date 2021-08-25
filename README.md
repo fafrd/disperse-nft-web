@@ -13,3 +13,7 @@ Interactively:
 Build for production:
 
     yarn build
+
+Deploy to github pages:
+
+    npm run deploy

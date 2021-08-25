@@ -6,7 +6,8 @@ import Validation from './Validation.jsx';
 import DISPERSE_ABI from './DisperseNft.abi.json';
 import ERC1155_ABI from './ERC1155.abi.json';
 
-const SUPPORTED_CHAINIDS = [1, 4];
+//const SUPPORTED_CHAINIDS = [1, 4];
+const SUPPORTED_CHAINIDS = [4];
 const NETWORK_NAMES = {1: "Ethereum Mainnet", 4: "Rinkeby Testnet"};
 const DISPERSE_CONTRACT_ADDR = {
   1: "",
@@ -254,7 +255,7 @@ class App extends React.Component {
       nftContractAddr = this.state.contract;
       recipients = JSON.parse(this.state.recipients);
       ids = JSON.parse(this.state.ids);
-      if (this.state.quantityToggle == "quantityToggleAuto")
+      if (this.state.quantityToggle === "quantityToggleAuto")
         quantities = this.state.parsedQuantities;
       else
         quantities = JSON.parse(this.state.quantities);
@@ -465,7 +466,7 @@ class App extends React.Component {
       <main className={this.state.walletStatus === "wrong-network" ? "" : "hidden"}>
         <h3>Switch a supported network to continue: </h3>
         <ul>
-          <li><h3><button className="switchNetwork" id="button-ethereum" type="button" onClick={this.switchNetwork}>Ethereum</button></h3></li>
+          {/* <li><h3><button className="switchNetwork" id="button-ethereum" type="button" onClick={this.switchNetwork}>Ethereum</button></h3></li> */}
           <li><h3><button className="switchNetwork" id="button-rinkeby" type="button" onClick={this.switchNetwork}>Rinkeby testnet</button></h3></li>
         </ul>
       </main>
