@@ -440,13 +440,18 @@ class App extends React.Component {
     }
 
     const networkName = NETWORK_NAMES[this.state.chainId] ? NETWORK_NAMES[this.state.chainId] : "unsupported network";
-    const connectionStatusMessage = (this.state.connectedAccounts.length > 0 && this.state.provider) ? <h3>Wallet connected to {networkName}</h3> : null;
+    const connectionStatusMessage = (this.state.connectedAccounts.length > 0 && this.state.provider) ? <p>Wallet connected to {networkName}.</p> : null;
 
     return <div className="App">
       <header className="App-header">
         <h1>Disperse NFT</h1>
         <h2>Batch-send your ERC1155 tokens to one or more recipients.</h2>
-        {connectionStatusMessage}
+        <p>
+          This tool allows you to send many ERC-1155 NFTs in a single transaction. This only works for NFTs that support multiple <i>copies</i> of the same NFT, such as Rarible multiples, or Curio Cards.
+        </p>
+        <p>
+          Source: <a href="https://github.com/fafrd/disperse-nft-contract">github.com/fafrd/disperse-nft-contract</a>
+        </p>
       </header>
 
       <main className={this.state.walletStatus === "no-wallet-detected" ? "" : "hidden"}>
@@ -527,6 +532,7 @@ class App extends React.Component {
 
         </form>
 
+        {connectionStatusMessage}
         <p>Contract: {contractPreview} <Validation valid={!this.state.contractError} /></p>
         <p>Recipients: {recipientsPreview} <Validation valid={!this.state.recipientsError} /></p>
         <p>NFT IDs: {idsPreview} <Validation valid={!this.state.idsError} /></p>
