@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.css": "/disperse-nft-web/static/css/main.cadd6edd.chunk.css",
+    "main.css": "/disperse-nft-web/static/css/main.91ae7c89.chunk.css",
     "main.js": "/disperse-nft-web/static/js/main.cd0d9627.chunk.js",
     "main.js.map": "/disperse-nft-web/static/js/main.cd0d9627.chunk.js.map",
     "runtime-main.js": "/disperse-nft-web/static/js/runtime-main.447e3c65.js",
@@ -8,13 +8,13 @@
     "static/js/2.c7b943eb.chunk.js": "/disperse-nft-web/static/js/2.c7b943eb.chunk.js",
     "static/js/2.c7b943eb.chunk.js.map": "/disperse-nft-web/static/js/2.c7b943eb.chunk.js.map",
     "index.html": "/disperse-nft-web/index.html",
-    "static/css/main.cadd6edd.chunk.css.map": "/disperse-nft-web/static/css/main.cadd6edd.chunk.css.map",
+    "static/css/main.91ae7c89.chunk.css.map": "/disperse-nft-web/static/css/main.91ae7c89.chunk.css.map",
     "static/js/2.c7b943eb.chunk.js.LICENSE.txt": "/disperse-nft-web/static/js/2.c7b943eb.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.447e3c65.js",
     "static/js/2.c7b943eb.chunk.js",
-    "static/css/main.cadd6edd.chunk.css",
+    "static/css/main.91ae7c89.chunk.css",
     "static/js/main.cd0d9627.chunk.js"
   ]
 }
