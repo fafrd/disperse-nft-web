@@ -6,12 +6,15 @@ import Validation from './Validation.jsx';
 import DISPERSE_ABI from './DisperseNft.abi.json';
 import ERC1155_ABI from './ERC1155.abi.json';
 
-//const SUPPORTED_CHAINIDS = [1, 4];
-const SUPPORTED_CHAINIDS = [4];
+const SUPPORTED_CHAINIDS = [1, 4];
 const NETWORK_NAMES = {1: "Ethereum Mainnet", 4: "Rinkeby Testnet"};
 const DISPERSE_CONTRACT_ADDR = {
-  1: "",
+  1: "0xb26e9ff02fc659738c4a2888e0ed58ff0b7c2763",
   4: "0x7b194fBF78eeb62044985d37c9c4cDF6F4f0CA28",
+}
+const DISPERSE_CONTRACT_LINK = {
+  1: <a href="https://etherscan.io/address/0xb26e9ff02fc659738c4a2888e0ed58ff0b7c2763">0xb26e9ff02fc659738c4a2888e0ed58ff0b7c2763</a>,
+  4: <a href="https://rinkeby.etherscan.io/address/0x7b194fBF78eeb62044985d37c9c4cDF6F4f0CA28">0x7b194fBF78eeb62044985d37c9c4cDF6F4f0CA28</a>,
 }
 
 class App extends React.Component {
@@ -451,7 +454,8 @@ class App extends React.Component {
           This tool allows you to send many ERC-1155 NFTs in a single transaction. This only works for NFTs that support multiple <i>copies</i> of the same NFT, such as Rarible multiples, or Curio Cards.
         </p>
         <p>
-          Source: <a href="https://github.com/fafrd/disperse-nft-contract">github.com/fafrd/disperse-nft-contract</a>
+          <span>Source: <a href="https://github.com/fafrd/disperse-nft-contract">github.com/fafrd/disperse-nft-contract</a></span><br />
+          <span className={SUPPORTED_CHAINIDS.includes(this.state.chainId) ? "" : "hidden"}>Contract: {DISPERSE_CONTRACT_LINK[this.state.chainId]}</span>
         </p>
       </header>
 
