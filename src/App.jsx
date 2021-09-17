@@ -470,7 +470,7 @@ class App extends React.Component {
       <main className={this.state.walletStatus === "wrong-network" ? "" : "hidden"}>
         <h3>Switch to a supported network to continue: </h3>
         <ul>
-          {/* <li><h3><button className="switchNetwork" id="button-ethereum" type="button" onClick={this.switchNetwork}>Ethereum</button></h3></li> */}
+          <li><h3><button className="switchNetwork" id="button-ethereum" type="button" onClick={this.switchNetwork}>Ethereum</button></h3></li>
           <li><h3><button className="switchNetwork" id="button-rinkeby" type="button" onClick={this.switchNetwork}>Rinkeby testnet</button></h3></li>
         </ul>
       </main>
