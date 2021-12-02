@@ -16,4 +16,4 @@ Build for production:
 
 Deploy to github pages:
 
-    npm run deploy
+    yarn run deploy

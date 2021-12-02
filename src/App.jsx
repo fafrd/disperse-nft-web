@@ -6,15 +6,19 @@ import Validation from './Validation.jsx';
 import DISPERSE_ABI from './DisperseNft.abi.json';
 import ERC1155_ABI from './ERC1155.abi.json';
 
-const SUPPORTED_CHAINIDS = [1, 4];
-const NETWORK_NAMES = {1: "Ethereum Mainnet", 4: "Rinkeby Testnet"};
+const SUPPORTED_CHAINIDS = [1, 4, 137, 80001];
+const NETWORK_NAMES = {1: "Ethereum Mainnet", 4: "Rinkeby Testnet", 137: "Polygon Mainnet", 80001: "Mumbai Testnet"};
 const DISPERSE_CONTRACT_ADDR = {
-  1: "0xb26e9ff02fc659738c4a2888e0ed58ff0b7c2763",
+  1: "0xb26E9fF02fc659738C4A2888e0Ed58FF0b7C2763",
   4: "0x7b194fBF78eeb62044985d37c9c4cDF6F4f0CA28",
+  137: "0x219E5cE7B2667a2Bd07C583DEAF5731e64b02cF6",
+  80001: "0x4Dc10B9c07DC00A6af5F8441324B8429D1e2C043",
 }
 const DISPERSE_CONTRACT_LINK = {
-  1: <a href="https://etherscan.io/address/0xb26e9ff02fc659738c4a2888e0ed58ff0b7c2763">0xb26e9ff02fc659738c4a2888e0ed58ff0b7c2763</a>,
+  1: <a href="https://etherscan.io/address/0xb26E9fF02fc659738C4A2888e0Ed58FF0b7C2763">0xb26E9fF02fc659738C4A2888e0Ed58FF0b7C2763</a>,
   4: <a href="https://rinkeby.etherscan.io/address/0x7b194fBF78eeb62044985d37c9c4cDF6F4f0CA28">0x7b194fBF78eeb62044985d37c9c4cDF6F4f0CA28</a>,
+  137: <a href="https://polygonscan.com/address/0x219E5cE7B2667a2Bd07C583DEAF5731e64b02cF6">0x219E5cE7B2667a2Bd07C583DEAF5731e64b02cF6</a>,
+  80001: <a href="https://mumbai.polygonscan.com/address/0x4dc10b9c07dc00a6af5f8441324b8429d1e2c043">0x4Dc10B9c07DC00A6af5F8441324B8429D1e2C043</a>,
 }
 
 class App extends React.Component {
@@ -114,6 +118,12 @@ class App extends React.Component {
         break;
       case "button-rinkeby":
         desiredChainId = 4;
+        break;
+      case "button-polygon":
+        desiredChainId = 137;
+        break;
+      case "button-mumbai":
+        desiredChainId = 80001;
         break;
       default:
         throw new Error("unexpected switch fallthrough for button id " + event.target.id);
@@ -472,6 +482,8 @@ class App extends React.Component {
         <ul>
           <li><h3><button className="switchNetwork" id="button-ethereum" type="button" onClick={this.switchNetwork}>Ethereum</button></h3></li>
           <li><h3><button className="switchNetwork" id="button-rinkeby" type="button" onClick={this.switchNetwork}>Rinkeby testnet</button></h3></li>
+          <li><h3><button className="switchNetwork" id="button-polygon" type="button" onClick={this.switchNetwork}>Polygon</button></h3></li>
+          <li><h3><button className="switchNetwork" id="button-mumbai" type="button" onClick={this.switchNetwork}>Mumbai testnet</button></h3></li>
         </ul>
       </main>
 
